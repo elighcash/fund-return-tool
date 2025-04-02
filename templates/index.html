@@ -73,6 +73,30 @@
             /* background-repeat: no-repeat; */
         }
         /* === End Styles for Particle Background === */
+
+        /* === Logo Styling === */
+        /* #page-logo { */
+            /* max-height: 50px; */ /* Adjust max height as needed */
+            /* width: auto; */      /* Maintain aspect ratio */
+        /* } */
+        /* .logo-container { */
+             /* Optional: Add text-align: left; if needed, but default is usually left */
+             /* Optional: Add padding if needed */
+        /* } */
+        /* === End Logo Styling === */
+        /* --- Reverting: Removing Logo CSS --- */
+        /* +++ Re-adding Logo CSS +++ */
+        /* #page-logo { */
+            /* max-height: 50px; */ /* Adjust max height as needed */
+            /* width: auto; */      /* Maintain aspect ratio */
+        /* } */
+        /* .logo-container { */
+             /* Optional: Add text-align: left; if needed, but default is usually left */
+             /* Optional: Add padding if needed */
+        /* } */
+        /* +++ End Re-adding Logo CSS +++ */
+        /* --- Rolling back logo addition again --- */
+
     </style>
 </head>
 <body>
@@ -81,6 +105,20 @@
     <!-- === End Particles.js Container === -->
 
     <div class="container mt-4">
+        <!-- === Logo === -->
+        <!-- <div class="logo-container mb-4"> --> <!-- Add a container for potential styling -->
+            <!-- <img src="{{ url_for('static', filename='logo.png') }}" alt="Pathway Logo" id="page-logo"> -->
+        <!-- </div> -->
+        <!-- === End Logo === -->
+        <!-- --- Reverting: Removing Logo HTML --- -->
+        <!-- +++ Re-adding Logo HTML +++ -->
+        <!-- <div class="logo-container mb-4"> --> <!-- Add a container for potential styling -->
+            <!-- <img src="{{ url_for('static', filename='logo.png') }}" alt="Pathway Logo" id="page-logo"> -->
+        <!-- </div> -->
+        <!-- +++ End Re-adding Logo HTML +++ -->
+         <!-- --- Rolling back logo addition again --- -->
+
+
         <h1 class="mb-4 text-center">Private Equity Fund Return Visualizer</h1>
 
         <!-- === Explanation Section === -->
@@ -674,17 +712,17 @@
       {
         "particles": {
           "number": {
-            "value": 60, // Number of particles - adjust density
+            "value": 80, // Increased particle count slightly
             "density": {
               "enable": true,
-              "value_area": 800 // Area over which particles are distributed
+              "value_area": 800
             }
           },
           "color": {
-            "value": "#adb5bd" // Particle color - use a subtle grey
+            "value": "#6c757d" // Darker grey particle color (Bootstrap's text-muted)
           },
           "shape": {
-            "type": "circle", // Shape of particles
+            "type": "circle",
             "stroke": {
               "width": 0,
               "color": "#000000"
@@ -694,17 +732,17 @@
             }
           },
           "opacity": {
-            "value": 0.4, // Particle opacity
-            "random": true, // Randomize opacity slightly
+            "value": 0.6, // Increased base particle opacity
+            "random": true,
             "anim": {
               "enable": true,
-              "speed": 0.2, // Speed of opacity animation
-              "opacity_min": 0.1,
+              "speed": 0.3, // Slightly faster opacity animation
+              "opacity_min": 0.2, // Increased minimum opacity
               "sync": false
             }
           },
           "size": {
-            "value": 2, // Particle size
+            "value": 2.5, // Slightly larger particles
             "random": true,
             "anim": {
               "enable": false,
@@ -715,18 +753,18 @@
           },
           "line_linked": {
             "enable": true,
-            "distance": 150, // Max distance to draw lines between particles
-            "color": "#ced4da", // Line color - subtle grey
-            "opacity": 0.3, // Line opacity
+            "distance": 150,
+            "color": "#8a9197", // Darker grey line color
+            "opacity": 0.5, // Increased line opacity
             "width": 1
           },
           "move": {
             "enable": true,
-            "speed": 1.5, // Particle movement speed
-            "direction": "none", // Movement direction (none means random)
+            "speed": 1.8, // Slightly faster movement
+            "direction": "none",
             "random": true,
             "straight": false,
-            "out_mode": "out", // How particles behave at edges (out, bounce)
+            "out_mode": "out",
             "bounce": false,
             "attract": {
               "enable": false,
@@ -739,14 +777,14 @@
           "detect_on": "canvas",
           "events": {
             "onhover": {
-              "enable": false, // Disable interactivity on hover
+              "enable": false, // Keep interactivity off
               "mode": "repulse"
             },
             "onclick": {
-              "enable": false, // Disable interactivity on click
+              "enable": false,
               "mode": "push"
             },
-            "resize": true // Adjust particle layout on window resize
+            "resize": true
           },
           "modes": {
             "grab": {
@@ -773,7 +811,7 @@
             }
           }
         },
-        "retina_detect": true // Adjusts for high-DPI screens
+        "retina_detect": true
       }
     );
     </script>
