@@ -1,0 +1,21 @@
+# Virtual environment
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE / Editor specific files
+.vscode/
+.idea/
+*.DS_Store
+
+# Other potentially sensitive files (add if needed)
+# .env
+# *.log 

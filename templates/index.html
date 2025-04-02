@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PE Fund Return Visualizer</title>
+    
+    <!-- Highcharts -->
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+    
+    <!-- jQuery for AJAX -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Bootstrap for styling -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        .chart-container {
+            min-height: 400px;
+            margin-bottom: 30px;
+        }
+        .slider-container {
+            margin-bottom: 20px;
+        }
+        .metrics-container {
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        /* Style the performance table */
+        .performance-table th {
+            font-weight: bold;
+            background-color: #e9ecef; /* Light grey header */
+        }
+        .performance-table td {
+            vertical-align: middle; /* Center text vertically */
+        }
+        .performance-table .impact-cell {
+            font-weight: bold;
+        }
+        /* Conditional styling will be applied via JS */
+        .impact-positive {
+            color: #198754; /* Bootstrap green */
+            /* background-color: #d1e7dd; /* Optional light green background */
+        }
+        .impact-negative {
+            color: #dc3545; /* Bootstrap red */
+            /* background-color: #f8d7da; /* Optional light red background */
+        }
+        .impact-neutral {
+            color: #6c757d; /* Bootstrap grey */
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1 class="mb-4">Private Equity Fund Return Visualizer</h1>
+
+        <!-- Row for Parameters and Performance Metrics -->
+        <div class="row mb-4">
+            <!-- Combined Parameters Card (Takes up more space, e.g., 7 columns) -->
+            <div class="col-md-7">
+                <div class="card h-100"> <!-- Added h-100 for equal height -->
+                    <div class="card-header">
+                        <h5>Scenario Parameters</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- LOC Parameters (Half width within this card) -->
+                            <div class="col-md-6 border-end"> <!-- Added border for visual separation -->
+                                <h6>Line of Credit</h6>
+                                <div class="mb-3">
+                                    <label for="loc-rate" class="form-label">Interest Rate (%)</label>
+                                    <input type="range" class="form-range" id="loc-rate" min="0" max="15" step="0.25" value="6">
+                                    <div class="d-flex justify-content-between">
+                                        <span>0%</span>
+                                        <span id="loc-rate-value">6%</span>
+                                        <span>15%</span>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="loc-delay" class="form-label">Delay Period (Quarters)</label>
+                                    <input type="range" class="form-range" id="loc-delay" min="0" max="8" step="1" value="2">
+                                    <div class="d-flex justify-content-between">
+                                        <span>0</span>
+                                        <span id="loc-delay-value">2</span>
+                                        <span>8</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- NAV Loan Parameters (Half width within this card) -->
+                            <div class="col-md-6">
+                                <h6>NAV Loan</h6>
+                                <div class="mb-3">
+                                    <label for="nav-rate" class="form-label">Interest Rate (%)</label>
+                                    <input type="range" class="form-range" id="nav-rate" min="0" max="15" step="0.25" value="8">
+                                    <div class="d-flex justify-content-between">
+                                        <span>0%</span>
+                                        <span id="nav-rate-value">8%</span>
+                                        <span>15%</span>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="nav-percentage" class="form-label">Loan Size (% of NAV)</label>
+                                    <input type="range" class="form-range" id="nav-percentage" min="0" max="50" step="5" value="30">
+                                    <div class="d-flex justify-content-between">
+                                        <span>0%</span>
+                                        <span id="nav-percentage-value">30%</span>
+                                        <span>50%</span>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="nav-term" class="form-label">Loan Term (Years)</label>
+                                    <input type="range" class="form-range" id="nav-term" min="0" max="5" step="0.5" value="3">
+                                    <div class="d-flex justify-content-between">
+                                        <span>0</span>
+                                        <span id="nav-term-value">3</span>
+                                        <span>5</span>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="nav-origination-year" class="form-label">Loan Origination Start (as of X year end)</label>
+                                    <input type="range" class="form-range" id="nav-origination-year" min="1" max="7" step="1" value="3">
+                                    <div class="d-flex justify-content-between">
+                                        <span>1</span>
+                                        <span id="nav-origination-year-value">3</span>
+                                        <span>7</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div> <!-- End inner row for parameters -->
+                    </div> <!-- End card-body -->
+                </div> <!-- End card -->
+            </div> <!-- End col-md-7 -->
+
+            <!-- Performance Metrics Card (Takes up remaining space, e.g., 5 columns) -->
+            <div class="col-md-5">
+                <div class="card h-100"> <!-- Added h-100 for equal height -->
+                    <div class="card-header bg-primary text-white"> <!-- Added background color -->
+                        <h5 class="mb-0">Performance Metrics</h5> <!-- Removed margin bottom -->
+                    </div>
+                    <div class="card-body d-flex align-items-center justify-content-center"> <!-- Center content -->
+                        <!-- Removed the old metrics-container div -->
+                        <table class="table table-hover table-bordered performance-table mb-0"> <!-- Added class, removed margin -->
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Scenario</th>
+                                    <th class="text-center">IRR</th>
+                                    <th class="text-center">IRR Impact (bps)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="fw-bold">Base Case</td>
+                                    <td id="base-irr" class="text-center">-</td>
+                                    <td class="text-center">-</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">With LOC</td>
+                                    <td id="loc-irr" class="text-center">-</td>
+                                    <td id="loc-impact" class="text-center impact-cell">-</td> <!-- Added class -->
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">With NAV Loan</td>
+                                    <td id="nav-irr" class="text-center">-</td>
+                                    <td id="nav-impact" class="text-center impact-cell">-</td> <!-- Added class -->
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Combined</td>
+                                    <td id="combined-irr" class="text-center">-</td>
+                                    <td id="combined-impact" class="text-center impact-cell">-</td> <!-- Added class -->
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div> <!-- End card-body -->
+                </div> <!-- End card -->
+            </div> <!-- End col-md-5 -->
+        </div> <!-- End Row for Parameters and Performance Metrics -->
+
+        <div class="row cash-flow-table">
+            <div class="col-md-12">
+                <h3>Cash Flow Details</h3>
+                <div id="cash-flow-tables"></div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div id="irr-chart" class="chart-container"></div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Cash Flow Visualization</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="cash-flow-chart" class="chart-container"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Cumulative Distribution</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="distribution-chart" class="chart-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
+            <button id="refresh-btn" class="btn btn-primary">Recalculate All</button>
+        </div>
+    </div>
+    
+    <script>
+        $(document).ready(function() {
+            // Add immediate trigger for all sliders
+            $('.form-range').on('input', function() {
+                // Update the display value
+                const valueId = $(this).attr('id') + '-value';
+                let value = $(this).val();
+                
+                // Add % symbol for percentage sliders
+                if ($(this).attr('id').includes('rate') || 
+                    $(this).attr('id').includes('percentage')) {
+                    $('#' + valueId).text(value + '%');
+                } else {
+                    $('#' + valueId).text(value);
+                }
+                
+                // Don't update too frequently - throttle updates
+                clearTimeout($(this).data('timer'));
+                $(this).data('timer', setTimeout(function() {
+                    updateCharts();
+                }, 300)); // 300ms delay to avoid too many requests
+            });
+            
+            // Add a visual notice when slides are moved
+            $('.form-range').on('input', function() {
+                $('#base-irr, #loc-irr, #nav-irr, #combined-irr').text('Updating...');
+            });
+            
+            function updateCharts() {
+                const timestamp = new Date().getTime();
+                
+                $.ajax({
+                    url: '/fund-data',
+                    data: {
+                        loc_rate: $('#loc-rate').val(),
+                        loc_delay: $('#loc-delay').val(),
+                        nav_rate: $('#nav-rate').val(),
+                        nav_pct: $('#nav-percentage').val(),
+                        nav_term: $('#nav-term').val(),
+                        nav_origination_year: $('#nav-origination-year').val(),
+                        _t: timestamp
+                    },
+                    cache: false,
+                    success: function(data) {
+                        console.log("Received data:", data);
+                        
+                        // Update the IRR values in the table with 2 decimal places
+                        $('#base-irr').text(data.base.irr.toFixed(2) + '%');
+                        
+                        // Update other IRRs if they exist
+                        if (data.loc.irr !== null) {
+                            $('#loc-irr').text(data.loc.irr.toFixed(2) + '%');
+                            $('#loc-impact').text((data.loc.irr - data.base.irr).toFixed(2) + '%');
+                        } else {
+                            $('#loc-irr').text('N/A');
+                            $('#loc-impact').text('N/A');
+                        }
+                        
+                        if (data.nav_loan.irr !== null) {
+                            $('#nav-irr').text(data.nav_loan.irr.toFixed(2) + '%');
+                            $('#nav-impact').text((data.nav_loan.irr - data.base.irr).toFixed(2) + '%');
+                        } else {
+                            $('#nav-irr').text('N/A');
+                            $('#nav-impact').text('N/A');
+                        }
+                        
+                        if (data.combined.irr !== null) {
+                            $('#combined-irr').text(data.combined.irr.toFixed(2) + '%');
+                            $('#combined-impact').text((data.combined.irr - data.base.irr).toFixed(2) + '%');
+                        } else {
+                            $('#combined-irr').text('N/A');
+                            $('#combined-impact').text('N/A');
+                        }
+                        
+                        // Update charts
+                        renderCashFlowChart(data);
+                        renderDistributionChart(data);
+                        renderCashFlowTables(data);
+                        renderIRRChart(data);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("AJAX error:", status, error);
+                        console.error(xhr.responseText);
+                        alert("Error calculating returns. See console for details.");
+                    }
+                }).fail(function(jqXHR, textStatus, errorThrown) {
+                     console.error("AJAX Error:", textStatus, errorThrown);
+                     $('#irr-chart').html('<p class="text-danger">Failed to fetch data from server.</p>');
+                     // Clear other elements on failure
+                     $('#distribution-chart').empty();
+                     $('#cash-flow-tables').empty();
+                     $('#cash-flow-chart').empty();
+                     $('#base-irr').text('-'); $('#loc-irr').text('-'); $('#nav-irr').text('-'); $('#combined-irr').text('-');
+                     $('#loc-impact').text('-'); $('#nav-impact').text('-'); $('#combined-impact').text('-');
+                });
+            }
+            
+            function renderCashFlowTables(data) {
+                const tableContainer = $('#cash-flow-tables');
+                tableContainer.empty(); // Clear previous tables
+
+                const scenarios = [
+                    { key: 'base', title: 'Base Case', showLoanInterest: false },
+                    { key: 'loc', title: 'LOC Scenario', showLoanInterest: true },
+                    { key: 'nav_loan', title: 'NAV Loan Scenario', showLoanInterest: true },
+                    { key: 'combined', title: 'Combined Scenario', showLoanInterest: true }
+                ];
+
+                scenarios.forEach(scenarioInfo => {
+                    const scenarioKey = scenarioInfo.key;
+                    const scenarioData = data[scenarioKey];
+                    const scenarioTotals = scenarioData.totals;
+
+                    // Determine headers based on whether to show loan/interest
+                    let headers = '<th>Date</th><th>Contributions</th><th>Distributions</th><th>Net Cash Flow</th><th>NAV</th>';
+                    let totalCols = 5; // Date + Contrib + Distrib + Net CF + NAV
+                    if (scenarioInfo.showLoanInterest) {
+                        headers += '<th>Loan Balance</th><th>Interest Paid</th>';
+                        totalCols += 2;
+                    }
+
+                    // Create table structure
+                    const table = $(`
+                        <div class="table-responsive mb-4">
+                            <h4>${scenarioInfo.title} Cash Flows</h4>
+                            <table class="table table-sm table-bordered">
+                                <thead><tr>${headers}</tr></thead>
+                                <tbody></tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th>Total</th>
+                                        <th>${'$' + scenarioTotals.contributions.toFixed(2)}</th>
+                                        <th>${'$' + scenarioTotals.distributions.toFixed(2)}</th>
+                                        <th></th>
+                                        <th>${'$' + scenarioTotals.nav.toFixed(2)}</th>
+                                        ${scenarioInfo.showLoanInterest ? '<th colspan="2"></th>' : ''}
+                                    </tr>
+                                    <tr>
+                                        <th>Total Value</th>
+                                        <th colspan="${totalCols - 1}">${'$' + scenarioTotals.total_value.toFixed(2)}</th>
+                                    </tr>
+                                    <tr>
+                                        <th>Multiple</th>
+                                        <th colspan="${totalCols - 1}">${scenarioTotals.multiple.toFixed(2)}x</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    `);
+
+                    const tableBody = table.find('tbody');
+
+                    // Fill table rows
+                    for (let i = 0; i < data.dates.length; i++) {
+                        let rowHtml = `
+                            <tr>
+                                <td>${data.dates[i]}</td>
+                                <td>$${(-scenarioData.contributions[i]).toFixed(2)}</td>
+                                <td>$${scenarioData.distributions[i].toFixed(2)}</td>
+                                <td>$${scenarioData.net_cf[i].toFixed(2)}</td>
+                                <td>$${scenarioData.nav[i].toFixed(2)}</td>`;
+
+                        if (scenarioInfo.showLoanInterest) {
+                            // Use actual loan/interest data, default to 0 if missing
+                            const loanBalance = scenarioData.loans ? scenarioData.loans[i] : 0;
+                            const interestPaid = scenarioData.interest ? scenarioData.interest[i] : 0;
+                            rowHtml += `
+                                <td>$${loanBalance.toFixed(2)}</td>
+                                <td>$${interestPaid.toFixed(2)}</td>`;
+                        }
+                        rowHtml += `</tr>`;
+                        tableBody.append(rowHtml);
+                    }
+
+                    tableContainer.append(table);
+                });
+            }
+            
+            function renderCashFlowChart(data) {
+                Highcharts.chart('cash-flow-chart', {
+                    chart: {
+                        type: 'column'
+                    },
+                    title: {
+                        text: 'Quarterly Cash Flows'
+                    },
+                    xAxis: {
+                        categories: data.dates,
+                        labels: {
+                            rotation: -45,
+                            style: {
+                                fontSize: '10px'
+                            }
+                        }
+                    },
+                    yAxis: {
+                        title: {
+                            text: 'Cash Flow ($)'
+                        }
+                    },
+                    plotOptions: {
+                        column: {
+                            grouping: false,
+                            shadow: false
+                        }
+                    },
+                    series: [{
+                        name: 'Base Contributions',
+                        data: data.base.contributions,
+                        color: '#FF9999'
+                    }, {
+                        name: 'Base Distributions',
+                        data: data.base.distributions,
+                        color: '#99FF99'
+                    }, {
+                        name: 'LOC Contributions',
+                        data: data.loc.contributions,
+                        color: '#FF0000'
+                    }, {
+                        name: 'LOC Distributions',
+                        data: data.loc.distributions,
+                        color: '#00FF00'
+                    }, {
+                        name: 'NAV Loan Contributions',
+                        data: data.nav_loan.contributions,
+                        color: '#CC0000'
+                    }, {
+                        name: 'NAV Loan Distributions',
+                        data: data.nav_loan.distributions,
+                        color: '#00CC00'
+                    }, {
+                        name: 'Combined Contributions',
+                        data: data.combined.contributions,
+                        color: '#FF8800'
+                    }, {
+                        name: 'Combined Distributions',
+                        data: data.combined.distributions,
+                        color: '#88FF00'
+                    }]
+                });
+            }
+            
+            function renderDistributionChart(data) {
+                // Calculate cumulative distributions
+                let baseCumulative = [];
+                let locCumulative = [];
+                let navCumulative = [];
+                let combinedCumulative = [];
+                
+                let baseSum = 0;
+                let locSum = 0;
+                let navSum = 0;
+                let combinedSum = 0;
+                
+                for (let i = 0; i < data.dates.length; i++) {
+                    baseSum += data.base.distributions[i];
+                    locSum += data.loc.distributions[i];
+                    navSum += data.nav_loan.distributions[i];
+                    combinedSum += data.combined.distributions[i];
+                    
+                    baseCumulative.push(baseSum);
+                    locCumulative.push(locSum);
+                    navCumulative.push(navSum);
+                    combinedCumulative.push(combinedSum);
+                }
+                
+                Highcharts.chart('distribution-chart', {
+                    chart: {
+                        type: 'line'
+                    },
+                    title: {
+                        text: 'Cumulative Distributions'
+                    },
+                    xAxis: {
+                        categories: data.dates,
+                        labels: {
+                            rotation: -45,
+                            style: {
+                                fontSize: '10px'
+                            }
+                        }
+                    },
+                    yAxis: {
+                        title: {
+                            text: 'Cumulative Distributions ($)'
+                        }
+                    },
+                    series: [{
+                        name: 'Base Case',
+                        data: baseCumulative
+                    }, {
+                        name: 'With LOC',
+                        data: locCumulative
+                    }, {
+                        name: 'With NAV Loan',
+                        data: navCumulative
+                    }, {
+                        name: 'Combined Strategy',
+                        data: combinedCumulative
+                    }]
+                });
+            }
+            
+            function renderIRRChart(data) {
+                // Update the performance metrics table
+                const baseIrr = data.base.irr; // Keep as percentage value
+                $('#base-irr').text(baseIrr !== null ? baseIrr.toFixed(2) + '%' : '-');
+
+                function updateImpactCell(scenarioKey, cellId, impactCellId) {
+                    const scenarioIrr = data[scenarioKey].irr;
+                    const irrCell = $('#' + cellId);
+                    const impactCell = $('#' + impactCellId);
+
+                    irrCell.text(scenarioIrr !== null ? scenarioIrr.toFixed(2) + '%' : '-');
+
+                    // Remove previous impact classes
+                    impactCell.removeClass('impact-positive impact-negative impact-neutral');
+
+                    if (baseIrr !== null && scenarioIrr !== null) {
+                        const impactBps = Math.round((scenarioIrr - baseIrr) * 100); // Calculate impact in Basis Points
+                        impactCell.text(impactBps); // Display BPS
+
+                        // Apply conditional styling based on impact
+                        if (impactBps > 0) {
+                            impactCell.addClass('impact-positive');
+                        } else if (impactBps < 0) {
+                            impactCell.addClass('impact-negative');
+                        } else {
+                            impactCell.addClass('impact-neutral');
+                        }
+                    } else {
+                        impactCell.text('-'); // Display '-' if IRR is missing
+                        impactCell.addClass('impact-neutral');
+                    }
+                }
+
+                updateImpactCell('loc', 'loc-irr', 'loc-impact');
+                updateImpactCell('nav_loan', 'nav-irr', 'nav-impact');
+                updateImpactCell('combined', 'combined-irr', 'combined-impact');
+
+
+                // Render the IRR comparison bar chart (existing code)
+                Highcharts.chart('irr-chart', {
+                    chart: {
+                        type: 'column'
+                    },
+                    title: {
+                        text: 'Final IRR Comparison'
+                    },
+                    xAxis: {
+                        categories: ['Base Case', 'With LOC', 'With NAV Loan', 'Combined'],
+                        crosshair: true
+                    },
+                    yAxis: {
+                        min: 0,
+                        title: {
+                            text: 'Internal Rate of Return (%)'
+                        },
+                         labels: {
+                            format: '{value}%' // Add percentage sign
+                        }
+                    },
+                    tooltip: {
+                        headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+                        pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+                            '<td style="padding:0"><b>{point.y:.2f}%</b></td></tr>',
+                        footerFormat: '</table>',
+                        shared: true,
+                        useHTML: true
+                    },
+                    plotOptions: {
+                        column: {
+                            pointPadding: 0.2,
+                            borderWidth: 0
+                        }
+                    },
+                    series: [{
+                        name: 'IRR',
+                        // Ensure data points are numbers or null
+                        data: [
+                            data.base.irr !== null ? parseFloat(data.base.irr.toFixed(2)) : null,
+                            data.loc.irr !== null ? parseFloat(data.loc.irr.toFixed(2)) : null,
+                            data.nav_loan.irr !== null ? parseFloat(data.nav_loan.irr.toFixed(2)) : null,
+                            data.combined.irr !== null ? parseFloat(data.combined.irr.toFixed(2)) : null
+                        ]
+                    }]
+                });
+            }
+            
+            // Initial chart render
+            updateCharts();
+
+            // Add to the JavaScript
+            $('#refresh-btn').click(function() {
+                updateCharts();
+            });
+
+            // Update slider value displays
+            $('#loc-rate').on('input', function() { $('#loc-rate-value').text($(this).val() + '%'); updateCharts(); });
+            $('#loc-delay').on('input', function() { $('#loc-delay-value').text($(this).val()); updateCharts(); });
+            $('#nav-rate').on('input', function() { $('#nav-rate-value').text($(this).val() + '%'); updateCharts(); });
+            $('#nav-percentage').on('input', function() { $('#nav-percentage-value').text($(this).val() + '%'); updateCharts(); });
+            $('#nav-term').on('input', function() { $('#nav-term-value').text($(this).val()); updateCharts(); });
+            $('#nav-origination-year').on('input', function() { $('#nav-origination-year-value').text($(this).val()); updateCharts(); }); // Add listener for new slider
+        });
+    </script>
+</body>
+</html> 
